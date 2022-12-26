@@ -3,7 +3,7 @@ name: Deploy serverless app
 on: 
   push:
     branches:
-      - v1
+      - master
 
 env:
   AWS_ACCOUNT: 271380032688
