@@ -1,0 +1,110 @@
+name: Deploy serverless app
+
+on: 
+  push:
+    branches:
+      - v1
+
+env:
+  AWS_ACCOUNT: 271380032688
+  AWS_REGION: us-east-1
+
+jobs:
+  continuous-integration:
+    name: continuous-integration
+    
+    strategy:
+      matrix:
+        go-version: [1.x]
+        platform: [ubuntu-latest]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v2
+      - name: Launch unit tests
+        run: |
+          echo "Launch unit tests"
+      - name: Launch api tests
+        run: |
+          echo "Launch api tests"
+
+  continuous-deployment:
+    needs: [continuous-integration]
+    name: continuous-deployment
+    permissions:
+      id-token: write
+      contents: read
+    
+    strategy:
+      matrix:
+        go-version: [1.x]
+        platform: [ubuntu-latest]
+    runs-on: ubuntu-latest
+
+    outputs:
+      restId: ${{ steps.config.outputs.restId }}
+      resourceId: ${{ steps.config.outputs.resourceId }}
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build package
+        run: |
+          make build
+
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::940566668764:role/terraform-deploy
+          aws-region: us-east-1
+      
+      - name: Identity Check
+        run: |
+          aws sts get-caller-identity
+          aws s3 ls
+
+      - name: Assume Role
+        uses: youyo/awscredswrap@v1
+        with:
+          role_arn: arn:aws:iam::271380032688:role/terraform-deploy
+          duration_seconds: 3600
+
+      - name: Identity Check
+        run: |
+          aws sts get-caller-identity
+          
+      - name: Get config
+        id: config
+        run: |
+          export APIG_ID=$(aws apigateway get-rest-apis --query "items[?name=='claim'].id" --region ${{env.AWS_REGION}} --output text)
+          export RESOURCE_ID=$(aws apigateway get-resources --query "items[?path=='/claim'].id" --rest-api-id $APIG_ID --region ${{env.AWS_REGION}} --output text)
+          echo ::set-output name=restId::$APIG_ID
+          echo ::set-output name=resourceId::$RESOURCE_ID
+
+      - name: serverless deploy
+        uses: serverless/github-action@master
+        with:
+          args: deploy
+        env:
+          AWS_ACCOUNT: ${{env.AWS_ACCOUNT}}
+          APIG_ID:  ${{ steps.config.outputs.restId }}
+          RESOURCE_ID: ${{ steps.config.outputs.resourceId }}
+
+
+  documentation:
+    needs: [continuous-integration, continuous-deployment]
+    name: documentation
+    strategy:
+      matrix:
+        go-version: [1.x]
+        platform: [ubuntu-latest]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create documentation
+        run: |
+          echo "Create documentation"
+        
+
+    

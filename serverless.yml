@@ -1,0 +1,27 @@
+service: claim
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: go1.x
+
+  apiGateway:
+    restApiId: ${env:APIG_ID}  # The resource ID of your API Gateway (can be found in the console in your API Gateway's base URL) 
+    restApiRootResourceId: ${env:RESOURCE_ID}
+
+package:
+  patterns:
+    - '!./**'
+    - ./bin/**
+
+functions:
+  hello:
+    handler: bin/hello
+    events:
+      - http: 
+          method: GET 
+          path: /go/{id}
+
+      - http: 
+          method: POST
+          path: /go/{id}
