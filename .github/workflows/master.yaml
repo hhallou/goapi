@@ -61,7 +61,6 @@ jobs:
       - name: Identity Check
         run: |
           aws sts get-caller-identity
-          aws s3 ls
 
       - name: Assume Role
         uses: youyo/awscredswrap@v1
