@@ -55,7 +55,7 @@ jobs:
       - name: Configure AWS credentials from Test account
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::940566668764:role/terraform-deploy
+          role-to-assume: arn:aws:iam::940566668764:role/GithubActionsRole
           aws-region: us-east-1
       
       - name: Identity Check
@@ -65,7 +65,7 @@ jobs:
       - name: Assume Role
         uses: youyo/awscredswrap@v1
         with:
-          role_arn: arn:aws:iam::271380032688:role/terraform-deploy
+          role_arn: arn:aws:iam::271380032688:role/GithubActionsRole
           duration_seconds: 3600
 
       - name: Identity Check
