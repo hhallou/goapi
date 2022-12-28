@@ -16,7 +16,7 @@ package:
 
 functions:
   hello:
-    handler: bin/hello
+    handler: bin/lambda
     events:
       - http: 
           method: GET 
